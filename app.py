@@ -47,7 +47,12 @@ with st.sidebar:
 if choice == "Home":
     st.title("🏠 Smart House Price Predictor")
     st.write("Predict house prices using a smart ML model")
-    st_lottie(lottie_animation, height=250)
+
+    if lottie_animation:
+        st_lottie(lottie_animation, height=250)
+    else:
+        st.warning("⚠️ Animation couldn't be loaded. Check your internet or try another URL.")
+
 
 elif choice == "Predict":
     st.title("🔍 Predict House Price")
