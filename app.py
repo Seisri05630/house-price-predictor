@@ -1,112 +1,99 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
+import pickle
+from streamlit_option_menu import option_menu
+from streamlit_lottie import st_lottie
+import requests
 
-# --- Page config ---
-st.set_page_config(
-    page_title="Smart House Price Predictor",
-    page_icon="🏠",
-    layout="centered"
-)
+# ========== Load assets ==========
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code == 200:
+        return r.json()
+    return None
 
-# --- Background style ---
-def add_bg():
-    st.markdown(
-         f"""
-         <style>
-         .stApp {{
-             background-image: url("https://images.unsplash.com/photo-1568605114967-8130f3a36994");
-             background-attachment: fixed;
-             background-size: cover;
-             font-family: 'Segoe UI', sans-serif;
-         }}
-         </style>
-         """,
-         unsafe_allow_html=True
-     )
-add_bg()
+lottie_animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_dyqn5syh.json")
 
-# --- Load model and data ---
-model = joblib.load('model.pkl')
-scaler = joblib.load('scaler.pkl')
-selected_features = joblib.load('features.pkl')
+# ========== Load model and transformers ==========
+model = pickle.load(open("model.pkl", "rb"))
+scaler = pickle.load(open("scaler.pkl", "rb"))
+features = pickle.load(open("features.pkl", "rb"))
 
-# --- Sidebar Info ---
-st.sidebar.title("📘 About")
-st.sidebar.info(
-    "This app predicts house prices based on top features using a trained regression model. "
-    "You can try it with sample values or upload a CSV for bulk predictions."
-)
-st.sidebar.markdown("Built with ❤️ by [Your Name]")
-
-# --- Header ---
-st.markdown("<h1 style='text-align: center; color: #003366;'>🏡 Smart House Price Predictor</h1>", unsafe_allow_html=True)
-
-# --- Sample Input & Prediction ---
-st.subheader("🎯 Enter House Features")
-
-input_data = {}
-
-col1, col2 = st.columns(2)
-with col1:
-    input_data['OverallQual'] = st.slider("Overall Quality (1–10)", 1, 10, 7)
-    input_data['GarageCars'] = st.slider("Garage Capacity (cars)", 0, 4, 2)
-    input_data['YearBuilt'] = st.number_input("Year Built", min_value=1800, max_value=2025, value=2005)
-with col2:
-    input_data['GrLivArea'] = st.number_input("Living Area (sq ft)", value=1800)
-    input_data['TotalBsmtSF'] = st.number_input("Basement Area (sq ft)", value=1000)
-
-if st.button("🎲 Use Sample Values"):
-    input_data = {
-        'OverallQual': 8,
-        'GrLivArea': 2000,
-        'GarageCars': 2,
-        'TotalBsmtSF': 900,
-        'YearBuilt': 2010
-    }
-    st.experimental_rerun()
-
-# Predict button
-if st.button("🔍 Predict House Price"):
-    full_input = {f: 0 for f in selected_features}
-    full_input.update(input_data)
-    df_input = pd.DataFrame([full_input])
-    scaled_input = scaler.transform(df_input)
-    prediction = model.predict(scaled_input)[0]
-    st.success(f"💰 Estimated House Price: ${prediction:,.2f}")
-
-# --- Batch Prediction Section ---
-st.markdown("---")
-st.subheader("📄 Upload a CSV for Bulk Prediction")
-
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
-if uploaded_file:
-    try:
-        data = pd.read_csv(uploaded_file)
-
-        for col in selected_features:
-            if col not in data.columns:
-                data[col] = 0
-
-        data = data[selected_features]
-        scaled = scaler.transform(data)
-        preds = model.predict(scaled)
-        data['PredictedPrice'] = preds
-
-        st.success("✅ Predictions complete. Scroll to preview or download below.")
-        st.dataframe(data.style.format({"PredictedPrice": "${:,.2f}"}))
-
-        csv = data.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Download Predictions as CSV", data=csv, file_name="predicted_prices.csv", mime="text/csv")
-
-    except Exception as e:
-        st.error(f"❌ Error processing file: {e}")
-
-# --- Footer ---
+# ========== Custom Styling ==========
 st.markdown("""
-<hr style="border: 0.5px solid #ddd;">
-<div style='text-align: center; font-size: 0.9em;'>
-Created by <a href="https://github.com/yourusername" target="_blank">SEIS-TEAM</a> • Powered by Streamlit & XGBoost
-</div>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <style>
+    html, body, [class*="css"]  {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f5f7fa;
+    }
+    .stButton>button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 16px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ========== Sidebar Navigation ==========
+with st.sidebar:
+    choice = option_menu("Navigation", ["Home", "Predict", "Upload"],
+                         icons=["house", "graph-up", "cloud-upload"], menu_icon="cast", default_index=0)
+
+# ========== Pages ==========
+if choice == "Home":
+    st.title("🏠 Smart House Price Predictor")
+    st.write("Predict house prices using a smart ML model")
+    st_lottie(lottie_animation, height=250)
+
+elif choice == "Predict":
+    st.title("🔍 Predict House Price")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        overall_qual = st.slider("🏗️ Overall Quality", 1, 10, 7)
+        garage_cars = st.slider("🚗 Garage Capacity", 0, 4, 2)
+    with col2:
+        year_built = st.number_input("📅 Year Built", 1800, 2025, 2010)
+        gr_liv_area = st.number_input("📏 Living Area (sq ft)", value=1800)
+
+    input_dict = {
+        "OverallQual": overall_qual,
+        "GarageCars": garage_cars,
+        "YearBuilt": year_built,
+        "GrLivArea": gr_liv_area
+    }
+
+    df = pd.DataFrame([input_dict])
+    df_scaled = scaler.transform(df)
+
+    if st.button("Predict Price"):
+        prediction = model.predict(df_scaled)
+        st.success(f"Estimated House Price: ₹{int(prediction[0]):,}")
+
+elif choice == "Upload":
+    st.title("📄 Bulk Upload for Predictions")
+    file = st.file_uploader("Upload CSV file", type=["csv"])
+    if file:
+        data = pd.read_csv(file)
+        try:
+            scaled_data = scaler.transform(data[features])
+            predictions = model.predict(scaled_data)
+            data['PredictedPrice'] = predictions
+            st.write(data)
+            csv = data.to_csv(index=False).encode('utf-8')
+            st.download_button("Download Results", csv, "predictions.csv", "text/csv")
+        except Exception as e:
+            st.error("Error in processing the file. Make sure it has the correct format.")
+
+# ========== Footer ==========
+st.markdown("""
+    <hr/>
+    <div style='text-align: center; color: grey;'>
+        Made By SEIS_TEAM
+        <br>Smart House Price Predictor - 2025
+    </div>
 """, unsafe_allow_html=True)
