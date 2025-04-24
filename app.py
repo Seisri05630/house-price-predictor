@@ -3,17 +3,6 @@ import pandas as pd
 import numpy as np
 import pickle
 from streamlit_option_menu import option_menu
-from streamlit_lottie import st_lottie
-import requests
-
-# ========== Load assets ==========
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code == 200:
-        return r.json()
-    return None
-
-lottie_animation = load_lottie_url("https://lottie.host/27d022db-719f-45d2-9ec8-dff503cf432e/7BlGLVy3zd.json")
 
 # ========== Load model and transformers ==========
 model = pickle.load(open("model.pkl", "rb"))
@@ -26,7 +15,7 @@ st.markdown("""
     <style>
     html, body, [class*="css"]  {
         font-family: 'Poppins', sans-serif;
-        background-color: #f5f7fa;
+        background-color: var(--background-color);
     }
     .stButton>button {
         background-color: #007bff;
@@ -40,19 +29,13 @@ st.markdown("""
 
 # ========== Sidebar Navigation ==========
 with st.sidebar:
-    choice = option_menu("Navigation", ["Home", "Predict", "Upload"],
-                         icons=["house", "graph-up", "cloud-upload"], menu_icon="cast", default_index=0)
+    choice = option_menu("Navigation", ["Home", "Predict", "Upload", "Feedback"],
+                         icons=["house", "graph-up", "cloud-upload", "chat-dots"], menu_icon="cast", default_index=0)
 
 # ========== Pages ==========
 if choice == "Home":
     st.title("🏠 Smart House Price Predictor")
     st.write("Predict house prices using a smart ML model")
-
-    if lottie_animation:
-        st_lottie(lottie_animation, height=250)
-    else:
-        st.warning("⚠️ Animation couldn't be loaded. Check your internet or try another URL.")
-
 
 elif choice == "Predict":
     st.title("🔍 Predict House Price")
@@ -94,11 +77,23 @@ elif choice == "Upload":
         except Exception as e:
             st.error("Error in processing the file. Make sure it has the correct format.")
 
+elif choice == "Feedback":
+    st.title("💬 Feedback")
+    st.write("We'd love to hear your thoughts!")
+    name = st.text_input("Your Name")
+    email = st.text_input("Email")
+    message = st.text_area("Feedback Message")
+    if st.button("Submit Feedback"):
+        if name and message:
+            st.success("Thank you for your feedback!")
+        else:
+            st.error("Please fill in your name and message.")
+
 # ========== Footer ==========
 st.markdown("""
     <hr/>
     <div style='text-align: center; color: grey;'>
-        Made By SEIS_TEAM
+        Made with SEIS-TEAM using Streamlit  
         <br>Smart House Price Predictor - 2025
     </div>
 """, unsafe_allow_html=True)
