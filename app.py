@@ -29,7 +29,7 @@ st.markdown("""
 
 # ========== Sidebar Navigation ==========
 with st.sidebar:
-    choice = option_menu("Navigation", ["Home", "Predict", "Upload", "Feedback"],
+    choice = option_menu("Navigation", ["Home", "Predict", "Upload"],
                          icons=["house", "graph-up", "cloud-upload", "chat-dots"], menu_icon="cast", default_index=0)
 
 # ========== Pages ==========
@@ -76,18 +76,6 @@ elif choice == "Upload":
             st.download_button("Download Results", csv, "predictions.csv", "text/csv")
         except Exception as e:
             st.error("Error in processing the file. Make sure it has the correct format.")
-
-elif choice == "Feedback":
-    st.title("💬 Feedback")
-    st.write("We'd love to hear your thoughts!")
-    name = st.text_input("Your Name")
-    email = st.text_input("Email")
-    message = st.text_area("Feedback Message")
-    if st.button("Submit Feedback"):
-        if name and message:
-            st.success("Thank you for your feedback!")
-        else:
-            st.error("Please fill in your name and message.")
 
 # ========== Footer ==========
 st.markdown("""
