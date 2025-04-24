@@ -13,7 +13,7 @@ def load_lottie_url(url):
         return r.json()
     return None
 
-lottie_animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_dyqn5syh.json")
+lottie_animation = load_lottie_url("https://lottie.host/27d022db-719f-45d2-9ec8-dff503cf432e/7BlGLVy3zd.json")
 
 # ========== Load model and transformers ==========
 model = pickle.load(open("model.pkl", "rb"))
