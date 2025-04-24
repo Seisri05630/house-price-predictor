@@ -1,6 +1,8 @@
 streamlit
-scikit-learn
-numpy
 pandas
-joblib
+numpy
+scikit-learn
 xgboost
+streamlit-option-menu
+streamlit-lottie
+requests
