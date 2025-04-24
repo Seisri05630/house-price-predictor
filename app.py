@@ -107,6 +107,6 @@ if uploaded_file:
 st.markdown("""
 <hr style="border: 0.5px solid #ddd;">
 <div style='text-align: center; font-size: 0.9em;'>
-Created by <a href="https://github.com/yourusername" target="_blank">Your Name</a> • Powered by Streamlit & XGBoost
+Created by <a href="https://github.com/yourusername" target="_blank">SEIS-TEAM</a> • Powered by Streamlit & XGBoost
 </div>
 """, unsafe_allow_html=True)
