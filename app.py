@@ -6,16 +6,20 @@ from streamlit_option_menu import option_menu
 from streamlit_lottie import st_lottie
 import requests
 
-# ===== Load Lottie Animation =====
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code == 200:
-        return r.json()
+# ===== Load Lottie Animation with Fallback =====
+def load_lottie_url(url: str):
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            return r.json()
+    except Exception as e:
+        st.warning(f"Could not load animation: {e}")
     return None
 
-lottie_animation = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_dyqn5syh.json")
+# Purple-themed animation
+lottie_animation = load_lottie_url("https://lottie.host/4e8aecec-c3ef-4f4e-94d5-210a50519557/Vzls1t98Ht.json")
 
-# ===== Load Model & Preprocessing Tools =====
+# ===== Load Model & Transformers =====
 try:
     model = pickle.load(open("model.pkl", "rb"))
     scaler = pickle.load(open("scaler.pkl", "rb"))
@@ -24,23 +28,36 @@ except Exception as e:
     st.error(f"🔴 Error loading model components: {e}")
     st.stop()
 
-# ===== Custom Styling =====
+# ===== Custom Styling: White with Purple Accents =====
 st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
     <style>
-    html, body, [class*="css"]  {
+    html, body, [class*="css"] {
         font-family: 'Poppins', sans-serif;
-        background-color: #f5f7fa;
+        background-color: #ffffff;
+    }
+    .stApp {
+        background-color: #ffffff;
     }
     .stButton>button {
-        background-color: #ff6600;
+        background-color: #7e57c2;
         color: white;
         padding: 10px 20px;
         border-radius: 8px;
         font-size: 16px;
+        transition: 0.3s ease;
     }
-    .stApp {
-        background-color: #f0f8ff;
+    .stButton>button:hover {
+        background-color: #5e35b1;
+    }
+    .stDownloadButton>button {
+        background-color: #7e57c2;
+        color: white;
+        border-radius: 6px;
+        padding: 8px 18px;
+    }
+    .css-1d391kg {
+        color: #5e35b1 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -54,16 +71,18 @@ with st.sidebar:
 if choice == "Home":
     st.title("🏠 Smart House Price Predictor - India Edition")
     st.write("Predict residential property prices across Indian cities using ML.")
-    st_lottie(lottie_animation, height=250)
+
+    if lottie_animation:
+        st_lottie(lottie_animation, height=250)
+    else:
+        st.info("🎬 Animation could not be loaded.")
 
 elif choice == "Predict":
     st.title("🔍 Predict House Price (India)")
 
-    st.markdown("Use the sections below to enter your property details:")
-
     with st.expander("🏗️ Structural Details"):
         overall_qual = st.slider("Overall Quality (1 - 10)", 1, 10, 7)
-        garage_cars = st.slider("Garage Capacity (Number of Cars)", 0, 4, 2)
+        garage_cars = st.slider("Garage Capacity (No. of Cars)", 0, 4, 2)
         year_built = st.number_input("Year Built", min_value=1800, max_value=2025, value=2010)
         gr_liv_area = st.number_input("Living Area (sq ft)", min_value=100, value=1800)
 
@@ -79,7 +98,7 @@ elif choice == "Predict":
         )
         amenity_score = len(amenities)
 
-    # Build input dictionary
+    # Prepare input for model
     input_dict = {
         "OverallQual": overall_qual,
         "GarageCars": garage_cars,
@@ -90,10 +109,9 @@ elif choice == "Predict":
         "AmenityScore": amenity_score
     }
 
-    # Ensure all expected features are included
     for f in features:
         if f not in input_dict:
-            input_dict[f] = 0  # fill default if missing
+            input_dict[f] = 0  # Fill missing features
 
     df = pd.DataFrame([input_dict])
     df_scaled = scaler.transform(df)
